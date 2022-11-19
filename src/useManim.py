@@ -9,6 +9,6 @@ def runManim(fileName: str, manimDirectory: str, className: str):
     from sys import path
     absfilePath = abspath(fileName)
     path.append(absfilePath)
-    chdir(manimDirectory)
     command = "manimgl "+absfilePath+" "+className
+    chdir(manimDirectory)
     system(command)
