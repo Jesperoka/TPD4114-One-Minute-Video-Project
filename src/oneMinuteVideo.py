@@ -5,7 +5,7 @@ else:
     import manimlib as m
 
     def scene1(self):
-        text = m.Text("Feedback Loop", font="Copperplate").scale(2)
+        text = m.Text("Feedback Loop", font="Courier New").scale(2)
         # text.arrange(m.RIGHT, buff=m.MED_SMALL_BUFF)
         self.play(m.Write(text), run_time=1)
         self.wait()
