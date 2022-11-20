@@ -4,6 +4,7 @@ if __name__ == "__main__":
 else:
     import manimlib as m
     from itertools import cycle
+    from random import randint
 
     # CONFIG
     # ---------------------------------------------------------------
@@ -27,20 +28,51 @@ else:
 
     # LOOP ANIMATION
     # ---------------------------------------------------------------
-    def loopOnce(self, feedbackLoop, colorOut: str, func, inputMobject, dotIn):
+    def loopOnce(self, feedbackLoops, colorOut: str, funcs, inputMobjects, dotIns, drawIn=None):
         CONNECTOR_TIME = 0.5
         QUICK_LOOP_TIME = (1/4.75)*CONNECTOR_TIME
         TRANSFORM_TIME = 0.01
 
-        self.play(m.MoveAlongPath(dotIn, feedbackLoop[0], rate_func=m.linear, run_time=QUICK_LOOP_TIME))
-        self.play(m.Transform(dotIn, feedbackLoop[1], rate_func=m.rush_from, run_time=QUICK_LOOP_TIME))
-        dotOut = m.Dot(feedbackLoop[2].get_start(), radius=0.1, color=colorOut).move_to(feedbackLoop[2].get_start())
-        self.play(m.ReplacementTransform(dotIn, dotOut, run_time=QUICK_LOOP_TIME))
-        outputMobject = func()
-        self.play(m.MoveAlongPath(dotOut, feedbackLoop[2], rate_func=m.linear, run_time=QUICK_LOOP_TIME))
-        self.play(m.MoveAlongPath(dotOut, feedbackLoop[3], rate_func=m.linear, run_time=CONNECTOR_TIME))
-        self.play(m.ReplacementTransform(inputMobject, outputMobject), run_time=TRANSFORM_TIME)
-        return outputMobject, dotOut
+        anims1 = []
+        anims2 = []
+        dotOuts = []
+        anims3 = []
+        funcAnims = []
+        outputMobjects = []
+        anims4 = []
+        anims5 = []
+        anims6 = []
+
+        for feedbackLoop, func, inputMobject, dotIn in zip(feedbackLoops, funcs, inputMobjects, dotIns):
+            t1 = m.MoveAlongPath(dotIn, feedbackLoop[0], rate_func=m.linear, run_time=QUICK_LOOP_TIME)
+            t2 = m.Transform(dotIn, feedbackLoop[1], rate_func=m.rush_from, run_time=QUICK_LOOP_TIME)
+            dotOut = m.Dot(feedbackLoop[2].get_start(), radius=0.1, color=colorOut).move_to(feedbackLoop[2].get_start())
+            t3 = m.ReplacementTransform(dotIn, dotOut, run_time=QUICK_LOOP_TIME)
+            funcAnim, outputMobject = func()
+            t4 = m.MoveAlongPath(dotOut, feedbackLoop[2], rate_func=m.linear, run_time=QUICK_LOOP_TIME)
+            t5 = m.MoveAlongPath(dotOut, feedbackLoop[3], rate_func=m.linear, run_time=CONNECTOR_TIME)
+            t6 = m.ReplacementTransform(inputMobject, outputMobject, run_time=TRANSFORM_TIME)
+            anims1.append(t1)
+            anims2.append(t2)
+            dotOuts.append(dotOut)
+            anims3.append(t3)
+            funcAnims.append(funcAnim)
+            outputMobjects.append(outputMobject)
+            anims4.append(t4)
+            anims5.append(t5)
+            anims6.append(t6) 
+
+        if drawIn != None: drawIn.set_run_time(QUICK_LOOP_TIME); anims1.append(drawIn)
+
+        self.play(m.AnimationGroup(*anims1))
+        self.play(m.AnimationGroup(*anims2))
+        self.play(m.AnimationGroup(*anims3))
+        self.play(m.AnimationGroup(*funcAnims, run_time=TRANSFORM_TIME))
+        self.play(m.AnimationGroup(*anims4))
+        self.play(m.AnimationGroup(*anims5))
+        self.play(m.AnimationGroup(*anims6))
+
+        return outputMobjects, dotOuts
     # ---------------------------------------------------------------
 
 
@@ -220,8 +252,8 @@ else:
 
         CONNECTOR_TIME = 2
         QUICK_LOOP_TIME = (1/4.75)*CONNECTOR_TIME
-        dotIn = m.Dot(point=corners[3], radius=0.1, color="#CA4732").shift(0.5*m.RIGHT)
-        transform7 = m.FadeIn(dotIn, shift=0.5*m.RIGHT, run_time=QUICK_LOOP_TIME/4)
+        dotIn = m.Dot(point=corners[3], radius=0.1, color="#CA4732")
+        transform7 = m.FadeIn(dotIn, run_time=QUICK_LOOP_TIME/4)
         transform8 = m.MoveAlongPath(dotIn, feedbackLoop[0], rate_func=m.linear, run_time=QUICK_LOOP_TIME)
         transform9 = m.ReplacementTransform(dotIn, feedbackLoop[1], rate_func=m.rush_from, run_time=QUICK_LOOP_TIME)
         
@@ -250,42 +282,96 @@ else:
         self.play(transform11)
         self.play(fadeOut)
         return feedbackLoop
+    
+    def strechedInPlaceTransform(grid, func):
+        w = grid.get_width()
+        h = grid.get_height()
+        c = grid.get_center()
+        grid.apply_complex_function(func)
+        grid.stretch_to_fit_width(w)
+        grid.stretch_to_fit_height(h)
+        grid.move_to(c)
+        colors = [m.BLUE_B, m.TEAL_B, m.GREEN_B , m.YELLOW_B, m.GOLD_B, m.RED_B, m.MAROON_B, m.PURPLE_B]
+        grid.set_submobject_colors_by_gradient(colors[randint(0,7)], colors[randint(0,7)])
+        return grid
 
     def scene7(self, feedbackLoop):
         colors = cycle(["#F6BC1B","#CA4732","#FDF1A3","#51AD79","#15337E"])
 
-        feedbackLoop1 = feedbackLoop[0:4].copy()
-        feedbackLoop1.shift(Y_SHIFT*m.UP).scale(HALF)
+        SPACING = 1.35
+        feedbackLoop1 = feedbackLoop[0:4].deepcopy()
+        feedbackLoop1.shift(SPACING*Y_SHIFT*m.UP).scale(HALF)
         box1 = m.Square(side_length=0.5).next_to(feedbackLoop1[0], direction=m.UP, buff=0.2)
         box2 = m.Square(side_length=0.5).next_to(feedbackLoop1[2], direction=m.UP, buff=0.2)
         self.play(m.AnimationGroup(m.ShowCreation(feedbackLoop1), m.ShowCreation(box1), m.ShowCreation(box2), lag_ratio=0.2))
         corners1 = cornersHelper(feedbackLoop1)
 
-        feedbackLoop2 = feedbackLoop.copy()
+        feedbackLoop2 = feedbackLoop[0:4].deepcopy()
         feedbackLoop2.scale(HALF)
+        LAPTOP_INITIAL_SIZE = 0.25
+        ADJUST = 0.05
+        laptop1  = m.Laptop().next_to(feedbackLoop2[0], direction=m.UP, buff=-0.85).scale(LAPTOP_INITIAL_SIZE).shift(ADJUST*m.LEFT)
+        laptop2  = m.Laptop().next_to(feedbackLoop2[2], direction=m.UP, buff=-0.85).scale(LAPTOP_INITIAL_SIZE).shift(ADJUST*m.LEFT)
         corners2 = cornersHelper(feedbackLoop2)
 
-        feedbackLoop3 = feedbackLoop.copy()
-        feedbackLoop3.shift(Y_SHIFT*m.DOWN).scale(HALF)
+        feedbackLoop3 = feedbackLoop[0:4].deepcopy()
+        feedbackLoop3.shift(SPACING*Y_SHIFT*m.DOWN).scale(HALF)
+        grid1 = m.Tex(r"\triangleright").get_grid(10, 10, height=4).next_to(feedbackLoop3[0], direction=m.UP, buff=-1.36).scale(0.2)
+        grid2 = m.Tex(r"\triangleright").get_grid(10, 10, height=4).next_to(feedbackLoop3[2], direction=m.UP, buff=-1.36).scale(0.2)
         corners3 = cornersHelper(feedbackLoop3)
 
         def rotation25():
-            box2.rotate(angle=-25*m.DEGREES)
-            return box2.copy().move_to(box1.get_center())
-        # def lengthen15():
-        #     pass
-        # def halve():
-        #     pass
+            return m.Rotate(box2, angle=-25*m.DEGREES), box2.copy().rotate(angle=-25*m.DEGREES).move_to(box1.get_center())
 
+        def shrink20():
+            return m.ScaleInPlace(laptop2, 0.8), laptop2.copy().scale(0.8).move_to(laptop1.get_center())
+
+        def arbitraryTransform():
+            temp = strechedInPlaceTransform(grid2.copy(), m.np.sinc)
+            return m.Transform(grid2, temp), temp.move_to(grid1.get_center())
+        
         colorIn = next(colors)
-        dotIn = m.Dot(point=corners1[3], radius=0.1, color=colorIn)#.shift(0.5*m.RIGHT)
-        for i in range(10):
+        dotIn1 = m.Dot(point=corners1[3], radius=0.1, color=colorIn)
+        dotIn2 = m.Dot(point=corners2[3], radius=0.1, color=colorIn)
+        dotIn3 = m.Dot(point=corners3[3], radius=0.1, color=colorIn)
+
+        feedbackLoops = [feedbackLoop1]
+        funcs = [rotation25]
+        inputMobjects = [box1]
+        dotIns = [dotIn1]
+        drawIn = None
+        for i in range(15):
+            if i == 5: 
+                drawIn = m.AnimationGroup(m.ShowCreation(feedbackLoop2), m.ShowCreation(laptop1), m.ShowCreation(laptop2), lag_ratio=0.2)
+                feedbackLoops.append(feedbackLoop2)
+                funcs.append(shrink20)
+                inputMobjects.append(laptop1)
+                dotIns.append(dotIn2)
+            if i == 10: 
+                drawIn = m.AnimationGroup(m.ShowCreation(feedbackLoop3), m.ShowCreation(grid1), m.ShowCreation(grid2), lag_ratio=0.2)
+                feedbackLoops.append(feedbackLoop3)
+                funcs.append(arbitraryTransform)
+                inputMobjects.append(grid1)
+                dotIns.append(dotIn3)
+
             colorOut = next(colors)
-            box1, dotIn = loopOnce(self, feedbackLoop1, colorOut, rotation25, box1, dotIn)
+
+            inputMobjects, dotIns = loopOnce(self, feedbackLoops, colorOut, funcs, inputMobjects, dotIns, drawIn=drawIn)
+            drawIn = None
+
             colorIn = colorOut
-            dotIn.set_color(colorIn)
+            dotIn1.set_color(colorIn)
+            dotIn2.set_color(colorIn)
+            dotIn3.set_color(colorIn)
+
+        # FadeOut everything in the scene
+        self.play(
+            *[m.FadeOut(mob)for mob in self.mobjects]
+        )
+        
 
     def scene8(self):
+        system = m.SVGMobject("Typical_State_Space_Model_(CT).svg")
         pass
 
     def scene9(self):
@@ -296,7 +382,7 @@ else:
 
     # ANIMATION CONSTRUCTOR
     # ---------------------------------------------------------------
-    class OneMinuteVideo(m.Scene): 
+    class OneMinuteVideo(m.Scene):
         def construct(self):
             text = scene1(self)
             scene2(self, text)
