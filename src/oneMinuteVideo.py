@@ -10,7 +10,7 @@ else:
     # ---------------------------------------------------------------
     WORD_FONT = "Courier New"
     TEXT_FONT = "Constantia"
-    WIKI_TEXT_FONT = "Arial"
+    WIKI_TEXT_FONT = "Aileron"
     TEXT_LINE_SPACING = 1.5
     TEXT_SCALE = 0.6
     DOUBLE = 2.0
@@ -159,6 +159,7 @@ else:
         fullAnimation = m.AnimationGroup(*[m.AnimationGroup(*[transform0, transform1]), transform2, transform3, transform4, transform5], lag_ratio=0.2)
         self.play(fullAnimation)
         self.play(highlight)
+        self.wait()
         return all, textLines
 
     def scene4(self, all3):
@@ -176,24 +177,25 @@ else:
         text3 = m.Text("Output", font=WORD_FONT, color=m.WHITE).move_to(output.get_center() + ADJUST*m.UP).scale(TEXT_SCALE)
 
         feedbackLoop = m.VGroup(input, triangle, output, connector, text1, text2, text3)
-        savedText = all3[4][0:111].save_state()
-        self.play(m.AnimationGroup(*[m.ReplacementTransform(all3[4][0:111], feedbackLoop), m.FadeOut(all3[0:4]), m.FadeOut(all3[4][111::]), m.FadeOut(all3[5::])]))
-        savedText = savedText.restore().set_color(m.GREY_C)
+        savedText = all3[4][0:111].copy()
+        self.play(m.AnimationGroup(m.Transform(savedText, feedbackLoop, replace_mobject_with_target_in_scene=True), m.FadeOut(all3)))
+        all3[4][0:111].set_color(m.GREY_C)
         self.wait()
         return feedbackLoop, savedText
 
     def scene5(self, all3, textLines, feedbackLoop, savedText):
-        transform1 = m.AnimationGroup(m.FadeIn(savedText), m.FadeOut(feedbackLoop), m.FadeIn(all3))
+        # catchAll = [m.FadeOut(mob, run_time=0.3) for mob in self.mobjects]
+        transform1 = m.AnimationGroup(m.FadeOut(feedbackLoop), m.FadeIn(all3))
 
         AMOUNT = 4
         animations = []
         for tLine in textLines: 
             animations.append(tLine.animate.set_opacity(1).shift(AMOUNT*m.UP))
-        linesTransform = m.AnimationGroup(*animations, lag_ratio=0.2)
+        linesTransform = m.AnimationGroup(*animations, lag_ratio=0.1)
 
         transform2 = m.AnimationGroup(all3.animate.shift(AMOUNT*m.UP), linesTransform)
         transform3 = m.FadeToColor(all3[5][0:153], m.ORANGE)
-        transform4 = m.AnimationGroup(m.AnimationGroup(m.FadeOut(all3), m.FadeOut(savedText)), m.FadeIn(feedbackLoop), lag_ratio=0.2)
+        transform4 = m.AnimationGroup(m.FadeOut(all3), m.FadeIn(feedbackLoop), lag_ratio=0.2)
 
         self.play(transform1)
         self.play(transform2)
@@ -328,7 +330,7 @@ else:
 
         def arbitraryTransform():
             temp = strechedInPlaceTransform(grid2.copy(), m.np.sinc)
-            return m.Transform(grid2, temp), temp.move_to(grid1.get_center())
+            return m.Transform(grid2, temp), temp.copy().move_to(grid1.get_center())
         
         colorIn = next(colors)
         dotIn1 = m.Dot(point=corners1[3], radius=0.1, color=colorIn)
@@ -364,18 +366,44 @@ else:
             dotIn2.set_color(colorIn)
             dotIn3.set_color(colorIn)
 
-        # FadeOut everything in the scene
-        self.play(
-            *[m.FadeOut(mob)for mob in self.mobjects]
-        )
+        # FadeOut everything in the scene   
+        fadeOut = [m.FadeOut(mob, run_time=0.3) for mob in self.mobjects]
+        return fadeOut
         
 
-    def scene8(self):
-        system = m.SVGMobject("Typical_State_Space_Model_(CT).svg")
-        pass
+    def scene8(self, fadeOut):
+        system = m.SVGMobject("BlockDiagram.svg", fill_color=m.ORANGE, stroke_color=m.ORANGE).scale(2)
+        self.play(m.AnimationGroup(m.ShowCreation(system, run_time=5), *fadeOut))
+        self.wait()
+        return m.FadeOut(system)
 
-    def scene9(self):
-        pass
+    def scene9(self, fadeOut2):
+        ADJUST = 0.85
+        TITLE_COLOR = m.ORANGE
+        MANIM_COLOR = m.RED_B
+        TYPE_COLOR = m.PURPLE_B
+        NAME_COLOR = m.GREEN_B
+        LINK_COLOR = m.BLUE_B
+        COMPANY_COLOR = m.GOLD_A
+        text1 = m.Text("Credits:", font=WORD_FONT, color=TITLE_COLOR).shift(1.45*Y_SHIFT*m.UP)
+        text2 = m.Text("Animations:\n Made with Manim, by Grant Sanderson",
+                        t2c={"Animations:":TYPE_COLOR,"Manim":MANIM_COLOR, "Grant Sanderson":NAME_COLOR}, font=TEXT_FONT, line_spacing_heigt=1.5).scale(ADJUST*TEXT_SCALE)
+        text3 = m.Text('Music:\n M Benson, Ben Cureton - The Elder Scrolls V: Skyrim "Dovahkiin in Jamaica" OC ReMix - https://ocremix.org/remix/OCR04390',
+                        t2c={"Music:":TYPE_COLOR,"Benson":NAME_COLOR,"Ben Cureton":NAME_COLOR,"OC ReMix":COMPANY_COLOR,"https://ocremix.org/remix/OCR04390":LINK_COLOR}, font=TEXT_FONT, line_spacing_heigt=1.5).scale(ADJUST*TEXT_SCALE)
+        text3[6:10].set_color(NAME_COLOR)
+        text4 = m.Text("Vector Image File:\n Typical State Space Model (CT).svg. \n (2020, October 5). \n Wikimedia Commons, the free media repository. \n Retrieved 20:51, November 20, 2022 from \n https://commons.wikimedia.org/w/index.php?title=File:Typical_State_Space_Model_(CT).svg&oldid=481313825",
+                        t2c={"Vector Image File:":TYPE_COLOR,"Wikimedia Commons, the free media repository.":COMPANY_COLOR,"https://commons.wikimedia.org/w/index.php?title=File:Typical_State_Space_Model_(CT).svg&oldid=481313825":LINK_COLOR}, font=TEXT_FONT, line_spacing_heigt=1.5).scale(ADJUST*TEXT_SCALE)
+        text5 = m.Text("Vector Image File:\n Wikipedia-logo-v2.svg. \n (2021, October 11). \n Wikimedia Commons, the free media repository. \n Retrieved 20:52, November 20, 2022 from \n https://commons.wikimedia.org/w/index.php?title=File:Wikipedia-logo-v2.svg&oldid=597567901",
+                        t2c={"Vector Image File:":TYPE_COLOR,"Wikimedia Commons, the free media repository.":COMPANY_COLOR,"https://commons.wikimedia.org/w/index.php?title=File:Wikipedia-logo-v2.svg&oldid=597567901":LINK_COLOR}, font=TEXT_FONT, line_spacing_heigt=1.5).scale(ADJUST*TEXT_SCALE)
+        text6 = m.Text("Mentioned Website:\n Wikipedia contributors. (2022, October 27). \n Feedback. In Wikipedia, The Free Encyclopedia. Retrieved 01:00, November 21, 2022, from \n https://en.wikipedia.org/w/index.php?title=Feedback&oldid=1118541935",
+                        t2c={"Mentioned Website:":TYPE_COLOR,"Wikipedia, The Free Encyclopedia.":COMPANY_COLOR,"https://en.wikipedia.org/w/index.php?title=Feedback&oldid=1118541935":LINK_COLOR}, font=TEXT_FONT, line_spacing_heigt=1.5).scale(ADJUST*TEXT_SCALE)
+
+        text = m.VGroup(text2, text3, text4, text5, text6).arrange(m.DOWN, buff=0.35, aligned_edge=m.LEFT).shift(0.2*m.RIGHT+0.2*m.DOWN)
+        self.play(m.AnimationGroup(fadeOut2, m.Write(text1)))
+        self.play(m.Write(text))
+        self.wait()
+        self.wait()
+        self.wait()
     # ---------------------------------------------------------------
 
 
@@ -390,5 +418,7 @@ else:
             feedbackLoop, savedText = scene4(self, all3)
             scene5(self, all3, textLines, feedbackLoop, savedText)
             feedbackLoop2 = scene6(self, feedbackLoop)
-            scene7(self, feedbackLoop2)
+            fadeOut = scene7(self, feedbackLoop2)
+            fadeOut2 = scene8(self, fadeOut)
+            scene9(self, fadeOut2)
     # ---------------------------------------------------------------
